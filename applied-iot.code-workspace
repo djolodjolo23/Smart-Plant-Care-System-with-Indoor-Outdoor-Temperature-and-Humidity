@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "../applied-iot"
+		},
+		{
+			"name": "starting-project",
+			"path": "../applied-iot/starting-project"
+		},
+		{
+			"name": "serial:/COM3",
+			"uri": "serial://com3/"
+		},
+		{
+			"name": "LNU-project",
+			"path": "."
+		}
+	],
+	"settings": {}
+}
