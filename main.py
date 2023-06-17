@@ -21,12 +21,20 @@ def get_soil_moisture_percentage(adc_value):
     return moisture_percentage
 
 def get_capacitator_measurements():
-    soil_adc = ADC(Pin(26))
+    soil_adc_pin1 = ADC(Pin(26))
+    soil_adc_pin2 = ADC(Pin(27))
+    first_iteration = True
     while True:
-        adc = soil_adc.read_u16()
-        moisture_perc = get_soil_moisture_percentage(adc)
-        mqtt_client.publish(topic="djolodjolo/feeds/moisture-sensor", msg=str(moisture_perc))
-        print('Sent to Adafruit IO: ', moisture_perc)
+        adc1 = soil_adc_pin1.read_u16()
+        adc2 = soil_adc_pin2.read_u16()
+        moisture_perc1 = get_soil_moisture_percentage(adc1)
+        moisture_perc2 = get_soil_moisture_percentage(adc2)
+        if not first_iteration:
+            mqtt_client.publish(topic="djolodjolo/feeds/1st_moisture_sensor", msg=str(moisture_perc1))
+            print('Sent to 1st moisture sensor feed : ', moisture_perc1)
+            mqtt_client.publish(topic="djolodjolo/feeds/2nd_moisture_sensor", msg=str(moisture_perc2))
+            print('Sent to 2nd moisture sensor feed : ', moisture_perc2)
+        first_iteration = False
         time.sleep(10)
 
 
