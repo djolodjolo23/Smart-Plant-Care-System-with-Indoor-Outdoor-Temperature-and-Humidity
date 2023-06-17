@@ -27,7 +27,7 @@ def get_capacitator_measurements():
         moisture_perc = get_soil_moisture_percentage(adc)
         mqtt_client.publish(topic="djolodjolo/feeds/moisture-sensor", msg=str(moisture_perc))
         print('Sent to Adafruit IO: ', moisture_perc)
-        time.sleep(5)
+        time.sleep(10)
 
 
 get_capacitator_measurements()
