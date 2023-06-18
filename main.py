@@ -24,8 +24,14 @@ def on_message(topic, msg):
     print(f"Received message on topic: {topic} - Message: {msg}")
     if msg.decode() == "TURN THE 1st PUMP ON":
         print("PUMP 1 IS ON!")
+        time.sleep(5)
+        print("PUMP 1 IS OFF!")
+        time.sleep(2)
     elif msg.decode() == "TURN THE 2nd PUMP ON":
         print("PUMP 2 IS ON!")
+        time.sleep(5)
+        print("PUMP 2 IS OFF!")
+        time.sleep(2)
 
 mqtt_client_adafruit.set_callback(on_message)
 mqtt_client_adafruit.subscribe("djolodjolo/feeds/Signal feed")
@@ -36,20 +42,21 @@ def send_to_discord(value, sensor_name):
 
     if current_time - last_sent_time >= time_interval: # some problems here
         if value <= 10:
-            payload = {
-                "content": f"WARNING!: Soil moisture percentage on {sensor_name} is: {value}%"
-            }
-            headers = {
-                "Content-Type": "application/json"
-            }
-            response = urequests.post(webhook_url, data=json.dumps(payload), headers=headers)
-            if response.status_code == 204:
-                print("Sent to Discord:", value)
-                last_sent_time = current_time
+            if current_time - last_sent_time >= time_interval: # some problems here
+                payload = {
+                    "content": f"WARNING!: Soil moisture percentage on {sensor_name} is: {value}%"
+                }
+                headers = {
+                    "Content-Type": "application/json"
+                }
+                response = urequests.post(webhook_url, data=json.dumps(payload), headers=headers)
+                if response.status_code == 204:
+                    print("Sent to Discord:", value)
+                    last_sent_time = current_time
+                else:
+                    print("Failed to send to Discord:", response.text)
             else:
-                print("Failed to send to Discord:", response.text)
-    else:
-        print("Skipping message. Not enough time has passed since the last sent message.")
+                print("Skipping message. Not enough time has passed since the last sent message.")
 
 
 
