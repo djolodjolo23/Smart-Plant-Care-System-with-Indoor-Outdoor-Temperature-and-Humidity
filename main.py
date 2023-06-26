@@ -19,6 +19,7 @@ import json
 import dht
 import framebuf
 import ssd1306
+import openweather as ow
 
 
 fully_dry = 44490  # 0% wet
@@ -27,9 +28,10 @@ webhook_url = "https://discord.com/api/webhooks/1118471807377346592/SyTomR8MQRTJ
 
 mqtt_broker_address = "15f912e25fc747329333d0fc573f7f59.s2.eu.hivemq.cloud"
 client_id = ubinascii.hexlify(machine.unique_id())
-#mqtt_broker_port = 1883
 mqtt_topic_signal = "topic/signal"
-mqtt_topic_moisture_sensor1 = "topic/data"
+mqtt_topic_moisture_sensor = "topic/moisture_sensor"
+
+
 
 soil_adc_pin1 = ADC(Pin(26))
 temp_humidity_sensor = Pin(27)
@@ -57,7 +59,10 @@ def on_message(topic, msg):
 
 def connect_to_mqtt_broker():
     global mqtt_client
-    mqtt_client = MQTTClient(client_id=client_id, server=mqtt_broker_address, port=0, user="djolodjolo", password="djordjekralj200294", keepalive=7200, ssl=True, ssl_params={'server_hostname' : '15f912e25fc747329333d0fc573f7f59.s2.eu.hivemq.cloud'})
+    mqtt_client = MQTTClient(client_id=client_id, server=mqtt_broker_address, 
+                             port=0, user="djolodjolo", password="djordjekralj200294", 
+                             keepalive=7200, ssl=True, 
+                             ssl_params={'server_hostname' : '15f912e25fc747329333d0fc573f7f59.s2.eu.hivemq.cloud'})
     mqtt_client.set_callback(on_message)
     mqtt_client.connect()
     mqtt_client.subscribe(mqtt_topic_signal)
@@ -126,12 +131,17 @@ def get_capacitator_measurements():
         print(indoor_temp, indoor_humidity)
         if not first_iteration:
             if time.time() - time_sent >= 600:
-                mqtt_client.publish(topic=mqtt_topic_moisture_sensor1, msg=str(moisture_perc1))
-                mqtt_client.publish(topic="YOUR_OUTDOOR_TEMP_TOPIC", msg=str(outdoor_temp))
-                mqtt_client.publish(topic="YOUR_INDOOR_HUMIDITY_TOPIC", msg=str(indoor_humidity))
-                mqtt_client.publish(topic="YOUR_INDOOR_TEMP_TOPIC", msg=str(indoor_temp))
+                mqtt_client.publish(topic=mqtt_topic_moisture_sensor, msg=str(moisture_perc1))
+                print("published to moisture sensor feed: ", moisture_perc1)
+                mqtt_client.publish(topic="topic/outdoor_temp", msg=str(ow.get_temperature()))
+                print("published to outdoor temp feed: ", ow.get_temperature())
+                mqtt_client.publish(topic="topic/indoor_humidity", msg=str(indoor_humidity))
+                print("published to indoor humidity feed: ", indoor_humidity)
+                mqtt_client.publish(topic="topic/indoor_temp", msg=str(indoor_temp))
+                print("published to indoor temp feed: ", indoor_temp)
+                mqtt_client.publish(topic="topic/outdoor_humidity", msg=str(ow.get_humidity()))
+                print("published to outdoor humidity feed: ", ow.get_humidity())
                 time_sent = time.time()
-            mqtt_client.publish(topic="YOUR_OUTDOOR_HUMIDITY_TOPIC", msg=str(outdoor_humidity))
             print('Sent to 1st moisture sensor feed : ', moisture_perc1)
             send_moist_warning_to_discord(moisture_perc1, "1st sensor")
         first_iteration = False
