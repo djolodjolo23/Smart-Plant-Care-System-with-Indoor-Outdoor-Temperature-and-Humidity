@@ -1,9 +1,21 @@
 import time
 from machine import Pin, ADC, I2C
+import ubinascii
+import urequests
+import json
+import dht
+import framebuf
+import ssd1306
+import network
+import usocket as socket
+import ussl as ssl
+import ujson as json
+import time
+import uos as os
+import ubinascii
 from mqtt import MQTTClient
 import urequests
 import json
-import openweather as ow
 import dht
 import framebuf
 import ssd1306
@@ -13,8 +25,11 @@ fully_dry = 44490  # 0% wet
 fully_wet = 16500  # 100% wet
 webhook_url = "https://discord.com/api/webhooks/1118471807377346592/SyTomR8MQRTJVds3mfL_pIfAIQFSEB_lgiLI97WHnJD9TrQAQhRMC5wPau5BNCevGR6G"
 
-ADAFRUIT_IO_USERNAME = "djolodjolo"
-ADAFRUIT_IO_KEY = "aio_MFoi10Z8EuG91Jfuv0Gr3cnnRQAQ"
+mqtt_broker_address = "15f912e25fc747329333d0fc573f7f59.s2.eu.hivemq.cloud"
+client_id = ubinascii.hexlify(machine.unique_id())
+#mqtt_broker_port = 1883
+mqtt_topic_signal = "topic/signal"
+mqtt_topic_moisture_sensor1 = "topic/data"
 
 soil_adc_pin1 = ADC(Pin(26))
 temp_humidity_sensor = Pin(27)
@@ -24,28 +39,10 @@ time.sleep(3)
 last_sent_time = 0
 time_interval = 3 * 60 * 60  # 3 hours
 
-'''
-width = 128
-height = 64
-i2c = I2C(0, sda=Pin(16), scl=Pin(17))
-oled = ssd1306.SSD1306_I2C(width, height, i2c)
 
-oled.fill(0)
-oled.text('Hello,', 0, 0)
-oled.text('peppe8o.com', 0, 16)
-oled.text('readers!', 0, 32)
-
-oled.show()
-'''''
-
-mqtt_client_adafruit = MQTTClient("", "io.adafruit.com", user=ADAFRUIT_IO_USERNAME, password=ADAFRUIT_IO_KEY)
-mqtt_client_adafruit.connect()
-print("YES! Connected to Adafruit!")
+mqtt_client = None
 
 
-# logic for turning on the water pump, based on the soil moisture sensor
-# and the signal feed from Adafruit IO
-# to be implemented, right now only messages are printed to the console.
 def on_message(topic, msg):
     print(f"Received message on topic: {topic} - Message: {msg}")
     if msg.decode() == "TURN THE 1st PUMP ON":
@@ -58,17 +55,22 @@ def on_message(topic, msg):
         send_confirmation_to_discord()
 
 
-# subscribe to the signal feed from Adafruit IO
-mqtt_client_adafruit.set_callback(on_message)
-mqtt_client_adafruit.subscribe("djolodjolo/feeds/Signal feed")
+def connect_to_mqtt_broker():
+    global mqtt_client
+    mqtt_client = MQTTClient(client_id=client_id, server=mqtt_broker_address, port=0, user="djolodjolo", password="djordjekralj200294", keepalive=7200, ssl=True, ssl_params={'server_hostname' : '15f912e25fc747329333d0fc573f7f59.s2.eu.hivemq.cloud'})
+    mqtt_client.set_callback(on_message)
+    mqtt_client.connect()
+    mqtt_client.subscribe(mqtt_topic_signal)
+    print("Connected to MQTT broker")
+
 
 def send_moist_warning_to_discord(value, sensor_name):
     global last_sent_time
     current_time = time.time()
     if value <= 10:
-        if current_time - last_sent_time >= time_interval: # some problems here
+        if current_time - last_sent_time >= time_interval:
             payload = {
-                 "content": f"WARNING!: Soil moisture percentage on {sensor_name} is: {value}%"
+                "content": f"WARNING!: Soil moisture percentage on {sensor_name} is: {value}%"
             }
             headers = {
                 "Content-Type": "application/json"
@@ -81,6 +83,7 @@ def send_moist_warning_to_discord(value, sensor_name):
                 print("Failed to send to Discord:", response.text)
         else:
             print("Skipping message. Not enough time has passed since the last sent message.")
+
 
 def send_confirmation_to_discord():
     adc1 = soil_adc_pin1.read_u16()
@@ -97,46 +100,44 @@ def send_confirmation_to_discord():
     else:
         print("Failed to send to Discord:", response.text)
 
+
 def read_temp_sensor_data():
     dht_sensor.measure()
     temperature = dht_sensor.temperature()
     humidity = dht_sensor.humidity()
     return temperature, humidity
 
-# convert the ADC value to a percentage
+
 def get_soil_moisture_percentage(adc_value):
     adc_range = fully_dry - fully_wet
     moisture_range = 100
     moisture_percentage = (fully_dry - adc_value) / adc_range * moisture_range
     return moisture_percentage
 
-# get the measurements from the soil moisture sensors
+
 def get_capacitator_measurements():
     first_iteration = True
     time_sent = 0
     while True:
-        mqtt_client_adafruit.check_msg()
+        mqtt_client.check_msg()
         adc1 = soil_adc_pin1.read_u16()
         moisture_perc1 = get_soil_moisture_percentage(adc1)
-        outdoor_temp = ow.get_temperature()
-        outdoor_humidity = ow.get_humidity()
         indoor_temp, indoor_humidity = read_temp_sensor_data()
         print(indoor_temp, indoor_humidity)
         if not first_iteration:
-             # if there were more then 10 minutes since the last sent message, send outdoor humidity and temperature
             if time.time() - time_sent >= 600:
-                mqtt_client_adafruit.publish(topic="djolodjolo/feeds/1st_moisture_sensor", msg=str(moisture_perc1))
-                mqtt_client_adafruit.publish(topic="djolodjolo/feeds/Outdoor temperature", msg=str(outdoor_temp))
-                mqtt_client_adafruit.publish(topic="djolodjolo/feeds/Indoor humidity", msg=str(indoor_humidity))
-                mqtt_client_adafruit.publish(topic="djolodjolo/feeds/Indoor temperature", msg=str(indoor_temp))
+                mqtt_client.publish(topic=mqtt_topic_moisture_sensor1, msg=str(moisture_perc1))
+                mqtt_client.publish(topic="YOUR_OUTDOOR_TEMP_TOPIC", msg=str(outdoor_temp))
+                mqtt_client.publish(topic="YOUR_INDOOR_HUMIDITY_TOPIC", msg=str(indoor_humidity))
+                mqtt_client.publish(topic="YOUR_INDOOR_TEMP_TOPIC", msg=str(indoor_temp))
                 time_sent = time.time()
-            mqtt_client_adafruit.publish(topic="djolodjolo/feeds/Outdoor humidity", msg=str(outdoor_humidity))
+            mqtt_client.publish(topic="YOUR_OUTDOOR_HUMIDITY_TOPIC", msg=str(outdoor_humidity))
             print('Sent to 1st moisture sensor feed : ', moisture_perc1)
             send_moist_warning_to_discord(moisture_perc1, "1st sensor")
         first_iteration = False
-        mqtt_client_adafruit.check_msg()
+        mqtt_client.check_msg()
         time.sleep(5)
 
 
-# run the program
+connect_to_mqtt_broker()
 get_capacitator_measurements()
