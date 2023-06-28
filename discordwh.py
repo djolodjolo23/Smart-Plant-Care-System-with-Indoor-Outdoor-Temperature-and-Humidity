@@ -6,8 +6,6 @@ fully_dry = 44490  # 0% wet
 fully_wet = 16500  # 100% wet
 webhook_url = "https://discord.com/api/webhooks/1118471807377346592/SyTomR8MQRTJVds3mfL_pIfAIQFSEB_lgiLI97WHnJD9TrQAQhRMC5wPau5BNCevGR6G"
 
-ADAFRUIT_IO_USERNAME = "djolodjolo"
-ADAFRUIT_IO_KEY = "aio_MFoi10Z8EuG91Jfuv0Gr3cnnRQAQ"
 
 
 last_sent_time = 0

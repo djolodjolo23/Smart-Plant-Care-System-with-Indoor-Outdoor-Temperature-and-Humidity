@@ -4,6 +4,8 @@ def do_connect():
     from time import sleep
     from secrets import secrets
     import machine
+    import ntptime
+
 
     wlan = network.WLAN(network.STA_IF)         # Put modem on Station mode
 
@@ -21,6 +23,7 @@ def do_connect():
     # Print the IP assigned by router
     ip = wlan.ifconfig()[0]
     print('\nConnected on {}'.format(ip))
+    ntptime.settime()
     return ip 
 
 
