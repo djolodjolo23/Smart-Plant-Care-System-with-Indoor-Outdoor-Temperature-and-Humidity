@@ -23,8 +23,8 @@ The insights that I gained from this project are that I can use the microcontrol
 - Capacitive Soil Moisture Sensor
 - DHT11 Temperature and Humidity Sensor
 
-|   |   |   |   |   |
+|  szdx |  sadsad | zxcxzc  | sdasda  |   |
 |---|---|---|---|---|
-|   |   |   |   |   |
+|  sadsad |   sadsadasd|   |   |   |
 |   |   |   |   |   |
 |   |   |   |   |   |
