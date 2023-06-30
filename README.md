@@ -90,6 +90,8 @@ Very convinient thing I also discovered on Node-red is that it is possible to cr
 
 # The code
 
+The code has been optimized to run 24/7 as it is supposed to be used in real life. The code is split into several files, but the main loop is inside the main.py file. 
+The main while loop can 
 
 
 # Transmitting the data / connectivity

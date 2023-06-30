@@ -13,7 +13,6 @@ import dht
 import openweather as ow
 import machine
 import gc
-import discordwh as dw
 import readsensordata as rsd
 
 
@@ -29,10 +28,9 @@ mqtt_topic_moisture_sensor = "topic/moisture_sensor"
 green_light = Pin(14, Pin.OUT)
 yellow_light = Pin(13, Pin.OUT)
 red_light = Pin(16, Pin.OUT)
-green_light.value(0)
-yellow_light.value(0)
-red_light.value(0)
-
+green_light.value(0) # debug
+yellow_light.value(0) # debug 
+red_light.value(0) # debug
 
 
 
@@ -70,7 +68,7 @@ def on_message(topic, msg):
         relay_pump_pin.init(Pin.IN)
         print("WATER PUMP IS OFF!")
         time.sleep(5)
-        dw.send_confirmation_to_discord()
+        send_confirmation_to_discord()
     elif msg.decode() == "auto wattering ON":
         auto_wattering = True
         print("Auto wattering is ON!")
@@ -89,14 +87,61 @@ def do_auto_wattering():
         relay_pump_pin.init(Pin.IN)
         print("WATER PUMP IS OFF!")
         time.sleep(5)
-        dw.send_confirmation_to_discord()
+        send_confirmation_to_discord()
     else:
         print("Soil moisture is above 10%")
         time.sleep(5)
 
 
+def send_moist_warning_to_discord(value):
+    if value <= 10:
+        payload = {
+            "content": f"WARNING!: Soil moisture percentage on your flower is: {value} Please water it!"
+        }
+        headers = {
+            "Content-Type": "application/json"
+        }
+        response = urequests.post(webhook_url, data=json.dumps(payload), headers=headers)
+        if response.status_code == 204:
+            print("Sent to Discord:", value)
+        else:
+            print("Failed to send to Discord:", response.text)
+
+
+
+def send_living_room_stats_to_discord(indoor_temp, indoor_humidity, outdoor_temp, outdoor_humidity, moisture_perc1):
+    payload = {
+        "content": f"Your living room stats are:\nIndoor temperature: {indoor_temp} C\nIndoor humidity: {indoor_humidity}%\nOutdoor temperature: {outdoor_temp} C\nOutdoor humidity: {outdoor_humidity}%\nFlower soil moisture percentage: {moisture_perc1}%"
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    response = urequests.post(webhook_url, data=json.dumps(payload), headers=headers)
+    if response.status_code == 204:
+        print("Sent to Discord:", payload)
+    else:
+        print("Failed to send to Discord:", response.text)
+
+
+
+def send_confirmation_to_discord():
+    adc1 = soil_adc_pin1.read_u16()
+    moisture_perc1 = rsd.get_soil_moisture_percentage(adc1, fully_dry, fully_wet)
+    payload = {
+        "content": f"Watering has been completed! Your plant is now happy! :)\nNew soil moisture percentage is:{moisture_perc1}%"
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    response = urequests.post(webhook_url, data=json.dumps(payload), headers=headers)
+    if response.status_code == 204:
+        print("Sent to Discord:", response.text)
+    else:
+        print("Failed to send to Discord:", response.text)
+
+
 def run():
-    green_light.value(1)
+    green_light.value(1) # debuging purposes
     machine.idle()
     print ("Starting the main function")
     starting_time = time.localtime()
@@ -113,7 +158,7 @@ def run():
     moist_warning_sent = False
     while True:
         print("Starting the loop")
-        yellow_light.value(1)
+        yellow_light.value(1) # debuging purposes
         mqtt_client.check_msg()
         moisture_perc1 = rsd.get_soil_moisture_percentage(adc1, fully_dry, fully_wet)
         live_time = time.localtime()
@@ -124,9 +169,9 @@ def run():
             machine.deepsleep(3600000) # 60 minutes
         else:
             mqtt_client.check_msg()
-            #if starting_hour + 1 == live_hour:
-            if starting_minute < 30 and (starting_minute + 30 == live_minute) or starting_minute >= 30 and (starting_minute - 30 == live_minute): # every 20 minutes
-                red_light.value(1)
+            #if starting_hour + 1 == live_hour: # every hour
+            if starting_minute < 30 and (starting_minute + 30 == live_minute) or starting_minute >= 30 and (starting_minute - 30 == live_minute): # every 30 minutes
+                red_light.value(1) # debuging purposes
                 mqtt_client.publish(topic=mqtt_topic_moisture_sensor, msg=str(moisture_perc1))
                 time.sleep(0.1)
                 print("Moisture percentage sent to MQTT broker.")
@@ -147,15 +192,20 @@ def run():
             if auto_wattering == True:
                 do_auto_wattering()
             if starting_hour == 9 and not living_room_stats_sent:
-                dw.send_living_room_stats_to_discord(indoor_temp, indoor_humidity, outdoor_temp, outdoor_humidity, moisture_perc1)
+                send_living_room_stats_to_discord(indoor_temp, indoor_humidity, outdoor_temp, outdoor_humidity, moisture_perc1)
                 living_room_stats_sent = True
                 print("Living room stats sent to Discord")
             if live_hour % 4 == 0 and not moist_warning_sent:
-                dw.send_moist_warning_to_discord(moisture_perc1)
+                send_moist_warning_to_discord(moisture_perc1)
                 moist_warning_sent = True
                 print("Moisture warning sent to Discord")
+            mqtt_client.check_msg()
             time.sleep(5)
+            mqtt_client.check_msg()
 
-
-connect_to_mqtt_broker()
-run()
+try:
+    connect_to_mqtt_broker()
+    run()
+except Exception as e:
+    print("Exception occurred:", e)
+    machine.reset()
