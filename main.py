@@ -156,12 +156,15 @@ def get_soil_moisture_percentage(adc_value):
 
 
 
-def get_capacitator_measurements():
+def run():
     green_light.value(1)
     machine.idle()
     print ("Starting the main function")
     starting_time = time.localtime()
     starting_hour = (starting_time[3] + 2) % 24
+    starting_minute = starting_time[4]
+    print("Starting hour:", starting_hour)
+    print("Starting minute:", starting_minute)
     mqtt_client.check_msg()
     adc1 = soil_adc_pin1.read_u16()
     indoor_temp, indoor_humidity = read_temp_sensor_data()
@@ -176,23 +179,29 @@ def get_capacitator_measurements():
         moisture_perc1 = get_soil_moisture_percentage(adc1)
         live_time = time.localtime()
         live_hour = (live_time[3] + 2) % 24
+        #live_minute = live_time[4]
         if live_hour >= 22 or live_hour < 8:
             print("Sleeping for 10 hours")
             machine.deepsleep(3600000) # 60 minutes
-            machine.reset()
         else:
             mqtt_client.check_msg()
             if starting_hour + 1 == live_hour:
+            #if starting_minute < 40 and (starting_minute + 20 == live_minute) or starting_minute >= 40 and (starting_minute - 40 == live_minute): # every 20 minutes
                 red_light.value(1)
                 mqtt_client.publish(topic=mqtt_topic_moisture_sensor, msg=str(moisture_perc1))
+                time.sleep(0.1)
                 print("Moisture percentage sent to MQTT broker.")
                 mqtt_client.publish(topic="topic/outdoor_temp", msg=str(outdoor_temp))
+                time.sleep(0.1)
                 print("Outdoor temperature sent to MQTT broker.")
                 mqtt_client.publish(topic="topic/indoor_humidity", msg=str(indoor_humidity))
+                time.sleep(0.1)
                 print("Indoor humidity sent to MQTT broker.")
                 mqtt_client.publish(topic="topic/indoor_temp", msg=str(indoor_temp))
+                time.sleep(0.1)
                 print("Indoor temperature sent to MQTT broker.")
                 mqtt_client.publish(topic="topic/outdoor_humidity", msg=str(outdoor_humidity))
+                time.sleep(0.1)
                 print("Stats sent to MQTT broker.")
                 time.sleep(5)
                 machine.reset()
@@ -206,9 +215,8 @@ def get_capacitator_measurements():
                 send_moist_warning_to_discord(moisture_perc1)
                 moist_warning_sent = True
                 print("Moisture warning sent to Discord")
-            mqtt_client.check_msg()
             time.sleep(5)
 
 
 connect_to_mqtt_broker()
-get_capacitator_measurements()
+run()
