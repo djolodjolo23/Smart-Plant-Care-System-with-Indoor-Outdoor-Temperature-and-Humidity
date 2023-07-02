@@ -13,7 +13,7 @@ import dht
 import openweather as ow
 import machine
 import gc
-from secrets import webhook_url
+from secrets import webhook_url, mqtt_broker_address, ssl_params
 import readsensordata as rsd
 
 
@@ -22,7 +22,10 @@ fully_wet = 16500  # 100% wet
 webhook_url = webhook_url["url"]
 gc.enable()
 
-mqtt_broker_address = "15f912e25fc747329333d0fc573f7f59.s2.eu.hivemq.cloud"
+address = mqtt_broker_address["address"]
+user = mqtt_broker_address["user"]
+password = mqtt_broker_address["password"]
+
 client_id = ubinascii.hexlify(machine.unique_id())
 mqtt_topic_signal = "topic/signal"
 mqtt_topic_moisture_sensor = "topic/moisture_sensor"
@@ -44,16 +47,15 @@ last_sent_time = 0
 time_interval = 2 * 60 * 60  # 3 hours
 
 auto_wattering = False
-
 mqtt_client = None
 
 # connects to MQTT broker and sets up a callback for messages
 def connect_to_mqtt_broker():
     global mqtt_client
-    mqtt_client = MQTTClient(client_id=client_id, server=mqtt_broker_address, 
-                             port=0, user="djolodjolo", password="djordjekralj200294", 
+    mqtt_client = MQTTClient(client_id=client_id, server=address, 
+                             port=0, user=user, password=password, 
                              keepalive=7200, ssl=True, 
-                             ssl_params={'server_hostname' : '15f912e25fc747329333d0fc573f7f59.s2.eu.hivemq.cloud'})
+                             ssl_params=ssl_params)
     mqtt_client.set_callback(on_message)
     mqtt_client.connect()
     mqtt_client.subscribe(mqtt_topic_signal)
@@ -137,17 +139,17 @@ def send_confirmation_to_discord():
     }
     response = urequests.post(webhook_url, data=json.dumps(payload), headers=headers)
     if response.status_code == 204:
-        print("Sent to Discord:", response.text)
+        print("Sent to Discord:", payload)
     else:
-        print("Failed to send to Discord:", response.text)
+        print("Failed to send to Discord:", payload)
 
-# sends a webhook message to discord channel
+# check if it's time to sleep, if so, go to sleep
 def check_if_time_to_sleep():
     live_time = time.localtime()
     live_hour = (live_time[3] + 2) % 24
     if live_hour >= 22 or live_hour < 8:
         print("It's time to sleep!")
-        machine.deepsleep(3600000)
+        machine.deepsleep(3600000) # 1 hour
 
 
 # main function that runs the program
@@ -161,8 +163,6 @@ def run():
     print("Starting hour:", starting_hour)
     print("Starting minute:", starting_minute)
     mqtt_client.check_msg()
-    adc1 = soil_adc_pin1.read_u16()
-    indoor_temp, indoor_humidity = rsd.read_temp_sensor_data(dht_sensor)
     outdoor_temp = ow.get_temperature()
     outdoor_humidity = ow.get_humidity()
     living_room_stats_sent = False
@@ -171,6 +171,8 @@ def run():
         print("Starting the loop")
         yellow_light.value(1) # debuging purposes
         mqtt_client.check_msg()
+        adc1 = soil_adc_pin1.read_u16()
+        indoor_temp, indoor_humidity = rsd.read_temp_sensor_data(dht_sensor)
         moisture_perc1 = rsd.get_soil_moisture_percentage(adc1, fully_dry, fully_wet)
         live_time = time.localtime()
         live_hour = (live_time[3] + 2) % 24
@@ -214,5 +216,5 @@ try:
     connect_to_mqtt_broker()
     run()
 except Exception as e:
-    print("Exception occurred:", e)
+    print("Exception occurred:", str(e))
     machine.reset()
