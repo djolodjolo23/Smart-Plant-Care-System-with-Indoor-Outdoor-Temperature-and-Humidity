@@ -19,6 +19,7 @@ import readsensordata as rsd
 
 fully_dry = 44490  # 0% wet
 fully_wet = 16500  # 100% wet
+can_be_watered = 30700 # sort of dry, one more day needed
 webhook_url = webhook_url["url"]
 gc.enable()
 
@@ -172,6 +173,7 @@ def run():
         yellow_light.value(1) # debuging purposes
         mqtt_client.check_msg()
         adc1 = soil_adc_pin1.read_u16()
+        print(adc1)
         indoor_temp, indoor_humidity = rsd.read_temp_sensor_data(dht_sensor)
         moisture_perc1 = rsd.get_soil_moisture_percentage(adc1, fully_dry, fully_wet)
         live_time = time.localtime()
