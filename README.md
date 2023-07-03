@@ -101,10 +101,7 @@ Node-RED is awesome because it offers a ton of functionality and is commonly use
 
 I also tried setting up a local MQTT broker called Mosquitto, but ran into some issues connecting it with the Pico. I'll definitely give it another shot in the future, but for now, I'm using HiveMQ. It's a cloud-based MQTT broker that's free for up to 25 connections and allows me to store up to 10 gigabytes of data. That's more than enough for my project, even if I decide to scale it up a bit.
 
-One cool thing I discovered with Node-RED is that I can create a "phone app" by saving a localhost page. It's basically a mobile version of the user interface, so I can control and monitor everything right from my phone. It's super handy!
-
-Overall, the switch to Node-RED and HiveMQ has been a game-changer. I now have more control over my data, a slick dashboard, and even a mobile app to manage everything. I like it a lot!
-
+One cool thing I discovered with Node-RED is that I can create a "phone app" by saving a localhost page. It's basically a mobile version of the user interface, so I can control and monitor everything right from my phone. 
 
 # The code
 
