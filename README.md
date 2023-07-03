@@ -1,4 +1,4 @@
-# Living Room Stats with self-watering flower pot controllable through node-red and HiveMQ.
+# Smart-Plant-Care-System-with-Indoor-Outdoor-Temperature-and-Humidity controllable through node-red and HiveMQ.
 Project for the course Introduction to Applied IoT at Linnaeus University, Summer 2023.
 
 Author: Djordje Dimitrov (dd222im)
