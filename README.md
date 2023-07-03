@@ -17,7 +17,7 @@ Participating in this course gave me the perfect opportunity to dive into the wo
 
 Throughout the process, I gained valuable insights and practical knowledge. I learned how to work with microcontrollers, set up webhook messages, and use them to get notifications when the soil moisture drops below a certain point. I also discovered the power of Node-RED in creating a user-friendly dashboard to control and monitor the system.
 
-<img src="images/discord_moist.png" alt="Image" width="700" height="250"> 
+<img src="images/discord_moist.png" alt="Image" width="500" height="200"> 
 
 Pretty cool, right??
 
