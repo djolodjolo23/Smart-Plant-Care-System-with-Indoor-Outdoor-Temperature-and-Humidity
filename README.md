@@ -35,7 +35,7 @@ Pretty cool, right??
 - Breadboard
   
 
-<img src="images/full_setup.jpg" alt="Image" width="600" height="450">
+<img src="images/full_setup.jpg" alt="Image" width="750" height="700">
 
 
 
@@ -79,6 +79,8 @@ Additional installations:
 
 
 # Putting everything together
+
+<img src="images/sketch.jpg" alt="Image" width="800" height="450"> 
 
 I connected all the components to a breadboard, and then linked the breadboard to the Pico microcontroller. The Pico is like the brains of the operation—it controls the components using its GPIO (General Purpose Input/Output) pins and also provides power and ground connections.
 
