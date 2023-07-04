@@ -178,3 +178,5 @@ Flower(hose, splitter, moisture sensor)
 <img src="images/final_1.jpg" alt="Image" width="900" height="700">
 
 The project turned out to be way more fun then I expected. I did not had any experiece with IoT before, and this was a very fun way for me to gain deeper knowledge and understanding of the subject. I am very happy with the result and I will definitely continue working on IoT related project in future. By following this project, I hope you will be able to learn something new and have fun as well!
+
+Video demonstration: https://youtu.be/TLBJpglLM1E
