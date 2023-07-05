@@ -105,7 +105,7 @@ One cool thing I discovered with Node-RED is that I can create a "phone app" by 
 
 # The code
 
-The code for this project is organized into different modules, with the main.py module being the heart of it all. It contains the main loop and functions that are called within that loop.
+The code for this project is organized into different modules, with the main.py module being the main one. It contains the main loop and functions that are called within that loop.
 
 I've made sure to optimize the code so that it can run non-stop, 24/7, just like a real-life system should. The optimization here means that it's designed to use as little power as possible while still being awake and ready to respond to commands (idle mode). Additionally, during quiet night hours, the code puts the microcontroller into deep sleep state and save energy even more (deep sleep mode).
 
