@@ -103,6 +103,18 @@ I also tried setting up a local MQTT broker called Mosquitto, but ran into some 
 
 One cool thing I discovered with Node-RED is that I can create a "phone app" by saving a localhost page. It's basically a mobile version of the user interface, so I can control and monitor everything right from my phone. 
 
+# Moisture sensor calibration
+
+<img src="images/wet-dry-variables.png" alt="Image" width="300" height="50"> 
+
+The pre-defined variables are measured manually by reading the analog values from the sensor when the sensor is out of the soil (completely dry), and when the sensor is submerged into the soil, after the soil has been completely saturated with water (completely wet). The wet and dry values are then used to calculate the moisture level of the soil. The values are like this in my specific case, but it can depend on the type of soil and the type of sensor used. The values can be easily adjusted to suit specific needs. If your plant is using a different type of soil, your fully wet variable might have a slightly different value.
+
+After pre-defining these two variables, it's easy to determine percentage of moisture in the soil. I used the following function:
+
+<img src="images/get_soil_moisture_percentge.png" alt="Image" width="600" height="100">
+
+It's basically just a conversion from analog values to percentage, where the dry value is 0% and the wet value is 100%. The function returns the percentage of moisture in the soil.
+
 # The code
 
 The code for this project is organized into different modules, with the main.py module being the main one. It contains the main loop and functions that are called within that loop.

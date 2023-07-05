@@ -19,9 +19,9 @@ import readsensordata as rsd
 
 fully_dry = 44490  # 0% wet
 fully_wet = 16500  # 100% wet
-webhook_url = webhook_url["url"]
-gc.enable()
 
+
+webhook_url = webhook_url["url"]
 address = mqtt_broker_address["address"]
 user = mqtt_broker_address["user"]
 password = mqtt_broker_address["password"]
@@ -35,6 +35,7 @@ red_light = Pin(16, Pin.OUT)
 green_light.value(0) # debug
 yellow_light.value(0) # debug 
 red_light.value(0) # debug
+gc.enable()
 
 
 
@@ -66,13 +67,18 @@ def on_message(topic, msg):
     global auto_wattering
     print(f"Received message on topic: {topic} - Message: {msg}")
     if msg.decode() == "TURN THE 1st PUMP ON":
+        red_light.value(1)
+        yellow_light.value(0)
+        green_light.value(0)
         relay_pump_pin = Pin(15, Pin.OUT)
         print("WATER PUMP IS ON!")
-        time.sleep(5)
+        time.sleep(3)
         relay_pump_pin.init(Pin.IN)
         print("WATER PUMP IS OFF!")
-        time.sleep(5)
+        time.sleep(3)
         send_confirmation_to_discord()
+        green_light.value(1)
+        red_light.value(0)
     elif msg.decode() == "auto wattering ON":
         auto_wattering = True
         print("Auto wattering is ON!")
@@ -84,17 +90,22 @@ def on_message(topic, msg):
 def do_auto_wattering():
     adc1 = soil_adc_pin1.read_u16()
     moisture_perc1 = rsd.get_soil_moisture_percentage(adc1, fully_dry, fully_wet)
-    if moisture_perc1 <= 10:
+    if moisture_perc1 <= 15:
+        red_light.value(1)
+        yellow_light.value(0)
+        green_light.value(0)
         relay_pump_pin = Pin(15, Pin.OUT)
         print("WATER PUMP IS ON!")
-        time.sleep(5)
+        time.sleep(3)
         relay_pump_pin.init(Pin.IN)
         print("WATER PUMP IS OFF!")
-        time.sleep(5)
+        time.sleep(3)
         send_confirmation_to_discord()
+        green_light.value(1)
+        red_light.value(0)
     else:
-        print("Soil moisture is above 10%")
-        time.sleep(5)
+        print("Soil moisture is above 10%, no need to water the plant!", moisture_perc1, adc1)
+        time.sleep(3)
 
 # sends a webhook message to discord channel
 def send_moist_warning_to_discord(value):
